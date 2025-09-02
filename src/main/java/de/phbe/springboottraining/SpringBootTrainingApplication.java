@@ -1,10 +1,12 @@
 package de.phbe.springboottraining;
 
+import de.phbe.springboottraining.core.FileSystem;
 import org.springframework.boot.Banner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ApplicationContext;
+import org.springframework.util.unit.DataSize;
 
 import java.util.Arrays;
 
@@ -35,6 +37,11 @@ public class SpringBootTrainingApplication {
 		Arrays.stream( ctx.getBeanDefinitionNames() )
 				.sorted()
 				.forEach( System.out::println );
+
+		FileSystem fs = ctx.getBean( FileSystem.class );
+		System.out.println(
+				DataSize.ofBytes( fs.getFreeDiskSpace() ).toGigabytes() + " GB"
+		);
 
 	}
 
