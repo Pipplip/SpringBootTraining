@@ -44,12 +44,12 @@ Domain-Driven Development ist eine Methode der Softwareentwicklung, die sich auf
 Beispiel: Domäne im E-Commerce: Der Bereich „Online-Shop“ ist die Domäne. In dieser Domäne gibt es Fachbegriffe wie „Produkt“, „Warenkorb“, „Bestellung“, „Zahlung“, „Kunde“ etc. Die Geschäftsprozesse beinhalten die Schritte vom Produktkauf bis hin zur Bestellabwicklung und Lieferung.
 
 Bausteine um die Domäne aufzubauen:
-1) Entität: sind Objekte, die eine eigene Identität über ihren gesamten Lebenszyklus hinweg besitzen
-2) Aggregat: Gruppe von Entitäten, die als Einheit betrachtet werden
-3) Werteobjekt (value object): haben keine Identität, eignen sich zur Darstellung von Werten
-4) Service: realisieren einen use-case und kapseln Geschäftslogik
-5) Repository: übernehmen die Verantwortung für die Persistenz (z.B. Datenbanken)
-6) Domain events: repräsentieren wichtige Ereignisse innerhalb der Domäne und können andere Teile des Systems informieren
+1. Entität: sind Objekte, die eine eigene Identität über ihren gesamten Lebenszyklus hinweg besitzen
+2. Aggregat: Gruppe von Entitäten, die als Einheit betrachtet werden
+3. Werteobjekt (value object): haben keine Identität, eignen sich zur Darstellung von Werten
+4. Service: realisieren einen use-case und kapseln Geschäftslogik
+5. Repository: übernehmen die Verantwortung für die Persistenz (z.B. Datenbanken)
+6. Domain events: repräsentieren wichtige Ereignisse innerhalb der Domäne und können andere Teile des Systems informieren
 
 
 Hexagonal Architecture (Zwiebelarchitekur):
@@ -92,12 +92,14 @@ D.h. man kann eine Configurations-Klasse schreiben, die @SpringBootApplication a
 Die wird in main als Parameter übergeben, die main darf dann aber kein @SpringBootApplication enthalten
 
 **Beispiel:**<br>
-`@SpringBootApplication
+```java
+@SpringBootApplication
 class Date4uConfiguration { }
-`<br>
-`public static void main( String[] args ) {
-SpringApplication.run( Date4uConfiguration.class, args );
-}`
+
+public static void main( String[] args ) {
+    SpringApplication.run( Date4uConfiguration.class, args );
+}
+```
 
 In der neuen Configuration lassen sich z.B. mit @ComponentScan( basePackages= { "com.tutego.date4u.core" }) beschreiben, wo SpringBoot das Ursprungsverzeichnis nach Klassen für den Container suchen soll. SpringBoot sucht in den Klassen nach Annotationen und interpretiert/instanziert die Klassen automatisch.
 Es gibt Filter und viel mehr.
@@ -105,3 +107,32 @@ Es gibt Filter und viel mehr.
 ***
 ### Spring shell Anwendungen
 Es gibt die Möglichkeit eine Spring Shell component in einer Spring Anwendung einzubetten. D.h. eine interaktive Shell wird dadurch gestartet.
+
+***
+### Inversion of Control (IoC) und Dependency Injection
+Spring kümmert sich darum, Objekte selbst zu erzeugen und ihre Abhängigkeiten bereitzustellen (injizieren) – anstatt dass du das manuell machst. (Dependency Injection)
+Inversion of Control bedeutet, dass wir die Kontrolle der Objekterzeugung an Spring abgeben.
+Z.B. müsste man in Klassen mit "new" andere Klassen instanziieren, wenn diese dort abhängig sind:
+
+```java
+public class UserService {
+    private UserRepository userRepository = new UserRepository();
+}
+```
+
+Hier erstellt UserService selbst ein UserRepository. Das ist problematisch für Tests, Wartbarkeit und Flexibilität.
+
+In Spring:
+```java
+@Service
+public class UserService {
+private final UserRepository userRepository;
+    @Autowired  // optional ab Spring 4.3 bei nur einem Konstruktor
+    public UserService(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
+}
+```
+Die @Autowired Annotation kann im Konstruktor, in einer setter Methode oder direkt im Feld angegeben werden.
+Es gibt Dinge bei Felder zu beachten, z.B. darf das Feld nicht final sein etc.
+
