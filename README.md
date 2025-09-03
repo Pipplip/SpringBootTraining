@@ -80,6 +80,7 @@ Daraus ergibt sich folgende Projektstruktur:
 | @Controller            | Eine spezielle Component. Nehmen vom Frontend Aufgaben entgegen                                                                                             |
 | @SpringBootApplication | Ist eine Zusammenfassung von weiteren Annotations: @SpringBootConfiguration, @EnableAutoConfiguration, @ComponentScan                                       |
 | @ShellComponent        | Spezielle Komponente für interaktive Shell Programme zu schreiben                                                                                           |
+| @Autowired             | Injiziert eine Abhängigkeit, damit Spring die Klassen automatisch verwalten kann                                                                            |
 
 **Kontrollfluss Beispiel:**<br>
 Es gibt eine Anfrage vom Client, diese
@@ -111,6 +112,7 @@ Es gibt die Möglichkeit eine Spring Shell component in einer Spring Anwendung e
 ***
 ### Inversion of Control (IoC) und Dependency Injection
 Spring kümmert sich darum, Objekte selbst zu erzeugen und ihre Abhängigkeiten bereitzustellen (injizieren) – anstatt dass du das manuell machst. (Dependency Injection)
+
 Inversion of Control bedeutet, dass wir die Kontrolle der Objekterzeugung an Spring abgeben.
 Z.B. müsste man in Klassen mit "new" andere Klassen instanziieren, wenn diese dort abhängig sind:
 
