@@ -138,3 +138,19 @@ private final UserRepository userRepository;
 Die @Autowired Annotation kann im Konstruktor, in einer setter Methode oder direkt im Feld angegeben werden.
 Es gibt Dinge bei Felder zu beachten, z.B. darf das Feld nicht final sein etc.
 
+Optionale Abhängigkeiten sind auch möglich und werden meist im setter angegeben z.B.
+Damit kannst du Komponenten oder Services so gestalten, dass sie auch ohne bestimmte Beans funktionieren, wenn diese nicht vorhanden sind.
+
+```java
+@Autowired( required = false ) // old school
+void setThumbnail( Thumbnail thumbnail ) { … }
+
+// besser
+@Autowired
+@Nullable
+private MyBean myBean; // Achtung myBean kann null sein und muss später geprüft werden
+
+```
+Weitere Optionen, die für den Konstruktor geeignet sind (Diese bevorzugen, vor required und nullable):
+- Optional<T> (macht keine null Referenz, sondern ist einfach leer, wenn die nicht injected wird)
+- ObjectProvider<T>
