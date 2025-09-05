@@ -1,4 +1,5 @@
 package de.phbe.springboottraining.core.photo;
 
-public class Thumbnail {
+public interface Thumbnail {
+    byte[] thumbnail(byte[] imageBytes);
 }

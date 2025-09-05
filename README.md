@@ -81,6 +81,8 @@ Daraus ergibt sich folgende Projektstruktur:
 | @SpringBootApplication | Ist eine Zusammenfassung von weiteren Annotations: @SpringBootConfiguration, @EnableAutoConfiguration, @ComponentScan                                       |
 | @ShellComponent        | Spezielle Komponente für interaktive Shell Programme zu schreiben                                                                                           |
 | @Autowired             | Injiziert eine Abhängigkeit, damit Spring die Klassen automatisch verwalten kann                                                                            |
+| @Configuration         | Spezielle Form von Component                                                                                                                                |
+| @Bean                  | Initialisierung von eigenen Fabrikmethoden                                                                                                                  |
 
 **Kontrollfluss Beispiel:**<br>
 Es gibt eine Anfrage vom Client, diese
@@ -111,7 +113,7 @@ Es gibt die Möglichkeit eine Spring Shell component in einer Spring Anwendung e
 
 ***
 ### Inversion of Control (IoC) und Dependency Injection
-Spring kümmert sich darum, Objekte selbst zu erzeugen und ihre Abhängigkeiten bereitzustellen (injizieren) – anstatt dass du das manuell machst. (Dependency Injection)
+Spring kümmert sich darum, Objekte selbst zu erzeugen und ihre Abhängigkeiten bereitzustellen (injizieren) – anstatt dass du das manuell machst. (=Dependency Injection)
 
 Inversion of Control bedeutet, dass wir die Kontrolle der Objekterzeugung an Spring abgeben.
 Z.B. müsste man in Klassen mit "new" andere Klassen instanziieren, wenn diese dort abhängig sind:
@@ -154,3 +156,28 @@ private MyBean myBean; // Achtung myBean kann null sein und muss später geprüf
 Weitere Optionen, die für den Konstruktor geeignet sind (Diese bevorzugen, vor required und nullable):
 - Optional<T> (macht keine null Referenz, sondern ist einfach leer, wenn die nicht injected wird)
 - ObjectProvider<T>
+
+***
+### Konfigurationsklassen und Fabrikmethoden
+Neben @Component lassen sich Spring-managed Beans auf eine andere Art erzeugen.
+
+Fabrikmethoden: Methode um eigene Instanzen aufzubauen und zurückzugeben.
+Bsp:
+
+```java
+@Configuration
+public class MyOwnBeanFactory {
+    @Bean
+    Foo methodOne(){ return ...}
+
+    @Bean
+    Bar methodTwo(){ return ...}
+}
+```
+Die Namen der Fabrikmethoden und Klassen muss eindeutig sein. Auch in anderen Klassen. Also es darf nicht eine Fabrikmethode test in zwei unterschiedlichen Klassen geben.
+
+Unterschied zwischen Component und Configuration:
+Component registriert einfache Komponenten automatisch und ruft dabei den Konstruktor der Komponente auf.
+Configuration hat eine manuelle Konfiguration und Definition von Beans. Sie sichert das Singleton-Verhalten bei @Bean Methoden.
+Component könnte zu doppelten Instanzen führen. Allgemein hat man mehr Kontrolle über die Bean-Erzeugung.
+Eine @Bean ist vergleichbar mit einem aufrufenden Konstruktor einen @Component.

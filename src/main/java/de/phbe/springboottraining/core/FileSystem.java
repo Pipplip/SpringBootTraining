@@ -12,6 +12,7 @@ import java.nio.file.Paths;
 public class FileSystem {
     // Abstraktion um später Bilder in einem FileSystem zu verwalten
 
+    // C:\Users\User\fs
     private final Path root = Paths.get( System.getProperty("user.home"), "fs" );
 
     public FileSystem() {
