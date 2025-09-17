@@ -25,12 +25,28 @@ public class FileSystem {
     }
 
     public byte[] load( String filename ) {
-        try { return Files.readAllBytes( root.resolve( filename ) ); }
-        catch ( IOException e ) { throw new UncheckedIOException( e ); }
+        try {
+            Path path = resolve( filename );
+            return Files.readAllBytes( path );
+        }
+        catch ( IOException e ) {
+            throw new UncheckedIOException( e );
+        }
     }
 
     public void store( String filename, byte[] bytes ) {
-        try { Files.write( root.resolve( filename ), bytes ); }
-        catch ( IOException e ) { throw new UncheckedIOException( e ); }
+        try {
+            Files.write( root.resolve( filename ), bytes );
+        }
+        catch ( IOException e ) {
+            throw new UncheckedIOException( e );
+        }
+    }
+
+    private Path resolve( String filename ) {
+        Path path = root.resolve( filename ).toAbsolutePath().normalize();
+        if ( ! path.startsWith( root ) )
+            throw new SecurityException( "Access to " + path + " denied" );
+        return path;
     }
 }

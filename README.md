@@ -72,17 +72,24 @@ Daraus ergibt sich folgende Projektstruktur:
 
 ***
 ### Annotations
-| Name                   | Auswirkung                                                                                                                                                  |
-|------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| @Component             | Macht eine Klasse zu einer Komponente/Spring-managed Bean. Sie wird von Spring automatisch erkannt, instanziiert. Sie ist dann aber "irgendeine" Komponente |
-| @Service               | Eine spezielle Component. Führt Busingesslogik aus                                                                                                          |
-| @Repository            | Eine spezielle Component. Regelt den Datenspeicher                                                                                                          |
-| @Controller            | Eine spezielle Component. Nehmen vom Frontend Aufgaben entgegen                                                                                             |
-| @SpringBootApplication | Ist eine Zusammenfassung von weiteren Annotations: @SpringBootConfiguration, @EnableAutoConfiguration, @ComponentScan                                       |
-| @ShellComponent        | Spezielle Komponente für interaktive Shell Programme zu schreiben                                                                                           |
-| @Autowired             | Injiziert eine Abhängigkeit, damit Spring die Klassen automatisch verwalten kann                                                                            |
-| @Configuration         | Spezielle Form von Component                                                                                                                                |
-| @Bean                  | Initialisierung von eigenen Fabrikmethoden                                                                                                                  |
+| Name                   | Auswirkung                                                                                                                                                                                                                     |
+|------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| @Component             | Macht eine Klasse zu einer Komponente/Spring-managed Bean. Sie wird von Spring automatisch erkannt, instanziiert. Sie ist dann aber "irgendeine" Komponente                                                                    |
+| @Service               | Eine spezielle Component. Führt Busingesslogik aus                                                                                                                                                                             |
+| @Repository            | Eine spezielle Component. Regelt den Datenspeicher                                                                                                                                                                             |
+| @Controller            | Eine spezielle Component. Nehmen vom Frontend Aufgaben entgegen                                                                                                                                                                |
+| @SpringBootApplication | Ist eine Zusammenfassung von weiteren Annotations: @SpringBootConfiguration, @EnableAutoConfiguration, @ComponentScan                                                                                                          |
+| @ShellComponent        | Spezielle Komponente für interaktive Shell Programme zu schreiben                                                                                                                                                              |
+| @Autowired             | Injiziert eine Abhängigkeit, damit Spring die Klassen automatisch verwalten kann                                                                                                                                               |
+| @Configuration         | Spezielle Form von Component                                                                                                                                                                                                   |
+| @Bean                  | Initialisierung von eigenen Fabrikmethoden                                                                                                                                                                                     |
+| @PostConstruct         | Initialisierung einer Methode nach Dependency Injection                                                                                                                                                                        |
+| @PreDestroy            | Ressourcen von Methoden entfernen, bevor sie vom Container entfernt werden                                                                                                                                                     |
+| @DependsOn             | Abhängigkeiten von Beans bekannt machen (bei Initialisierung)                                                                                                                                                                  |
+| @Lazy                  | Verzögerte Initialisierung                                                                                                                                                                                                     |
+| @Conditional           | Wird an eine Bean oder Component annotiert und gibt Bedingungen für eine Initialisierung mit. Die Klasse muss Interface Condition implementieren (matches()). Es gibt in spring viele vordefinierte ConditionalOn Annotationen |
+| @Value                 | Default Werte definieren. Können auch aus der application.prop stammen                                                                                                                                                         |
+
 
 **Kontrollfluss Beispiel:**<br>
 Es gibt eine Anfrage vom Client, diese
@@ -181,3 +188,29 @@ Component registriert einfache Komponenten automatisch und ruft dabei den Konstr
 Configuration hat eine manuelle Konfiguration und Definition von Beans. Sie sichert das Singleton-Verhalten bei @Bean Methoden.
 Component könnte zu doppelten Instanzen führen. Allgemein hat man mehr Kontrolle über die Bean-Erzeugung.
 Eine @Bean ist vergleichbar mit einem aufrufenden Konstruktor einen @Component.
+
+***
+### Autokonfiguration
+
+Reihenfolge der Autokonfiguration
+1. Command-Line-Args (--server.port=9090)
+2. Umgebungsvariablen (SPRING_SERVER_PORT)
+3. application.properties oder application.yml (im src/main/resources)
+4. Profile-spezifische Dateien (application-dev.yml)
+5. JAR-Dateien mit @PropertySource
+6. Default-Werte in Code (@Value("${...:default}"))
+
+Die erste gefundene Quelle gewinnt – andere werden ignoriert, falls sie denselben Schlüssel enthalten.
+
+Profile anlegen:<br>
+application.properties # Basis Konfiguration<br>
+application-dev.properties # Konfiguration für DEV<br>
+application-stage.properties # Konfiguration für STAGE<br>
+
+Und eine Konfigurationsklasse. Eine Bean, die die Konfiguration abbildet
+
+```java
+@Component
+@ConfigurationProperties(prefix = "app-prefix")
+public class ShopConfig { ...
+```
