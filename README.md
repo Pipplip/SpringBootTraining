@@ -13,8 +13,8 @@ Man kann eigene Oberklassen schreiben, jedoch muss man dann prüfen ob alle Abnh
 | Name                         | Wirkung                                                                                        |
 |------------------------------|------------------------------------------------------------------------------------------------|
 | spring-boot-starter          | Core-Starter und bringt alles mit, was man für Spring-Boot-Anwendungen braucht                 |
-| spring-boot-starter-jdbc     | Databasezugriffe über JDBC und DataSources                                                     |
-| spring-boot-starter-data-jpa | Jakarta Persistenz                                                                             |
+| spring-boot-starter-jdbc     | Databasezugriffe über JDBC und DataSources (d.h. SQL selbst schreiben ohne Entities etc.)      |
+| spring-boot-starter-data-jpa | Jakarta Persistenz (Hibernate + automatisches Entity mapping). Wenn CRUD Funktionen ausreichen |
 | spring-boot-starter-json     | JSON Mapping                                                                                   |
 | spring-boot-starter-web      | Für Webservices und dynamische Webseiten inklusive des Servlet-Containers Tomcat               |
 
@@ -241,3 +241,19 @@ Operationen können Vor- und Nachbearbeitet werden. z.B.
 - Validierung (Bean validation)
 - Asynchrone Aufrufe durch z.B. neue Threads, damit eine Methode nicht blockiert wird (@EnableAsync + @Async)
 - Retry Mechanismus, als Rollback oder um erneut services anzusprechen (@EnableRetry, @Retryable)
+
+***
+### Datenbank Integration: JPA
+Jakarta Persistence: spring-boot-starter-data-jpa
+<br>Ablauf:<br>
+JPA -> Hibernate ORM -> JDBC -> JDBC Treiber -> DB
+<br>D.h. data-jpa enthält alles, was im Ablauf gebraucht wird (Spring Data JPA, Hibernate ORM, Spring Boot starter JDBC)
+
+Wichtig, dass man einige Properties angibt, z.B. 
+- spring.jpa.generate-ddl
+- logging.level.org.hibernate.SQL=DEBUG
+- logging.level.org.hibernate.orm.jdbc.bind=TRACE
+- spring.jpa.properties.hibernate.format_sql=true
+- spring.jpa.properties.hibernate.highlight_sql=true
+
+<b>Entity-Beans</b>
