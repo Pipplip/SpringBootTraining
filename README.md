@@ -89,7 +89,8 @@ Daraus ergibt sich folgende Projektstruktur:
 | @Lazy                  | Verzögerte Initialisierung                                                                                                                                                                                                     |
 | @Conditional           | Wird an eine Bean oder Component annotiert und gibt Bedingungen für eine Initialisierung mit. Die Klasse muss Interface Condition implementieren (matches()). Es gibt in spring viele vordefinierte ConditionalOn Annotationen |
 | @Value                 | Default Werte definieren. Können auch aus der application.prop stammen                                                                                                                                                         |
-
+| @EnableCaching         | Aktiveren von Caching, kann bei einer beliebigen Configuration stehen                                                                                                                                                          |
+| @Cacheable             | Caching aktivieren an einer Methode. Bsp. Mit Cache-Namen @Cacheable("file.Filesystem"). Conditions gibt es auch.                                                                                                              |
 
 **Kontrollfluss Beispiel:**<br>
 Es gibt eine Anfrage vom Client, diese
@@ -227,3 +228,16 @@ Spring verwendet das Publisher-Subscriber-Muster:
 - ApplicationEventPublisher: Spring-interne Komponente, die Events verschickt.
 
 Es gibt auch asynchrone und vordefinierte Events.
+
+***
+### Proxy
+
+Spring Boot verwendet oft Proxy Patterns.
+D.h. ein Client greift nicht direkt auf das Zielobjekt zu, sondern kommuniziert mit einem Proxy.
+Vorteil des Proxy:<br>
+Operationen können Vor- und Nachbearbeitet werden. z.B. 
+- Caching @Cacheable
+- Transaktionsmanagement (neue Transaktionen können gestartet werden)
+- Validierung (Bean validation)
+- Asynchrone Aufrufe durch z.B. neue Threads, damit eine Methode nicht blockiert wird (@EnableAsync + @Async)
+- Retry Mechanismus, als Rollback oder um erneut services anzusprechen (@EnableRetry, @Retryable)
