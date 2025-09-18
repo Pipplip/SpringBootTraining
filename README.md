@@ -214,3 +214,16 @@ Und eine Konfigurationsklasse. Eine Bean, die die Konfiguration abbildet
 @ConfigurationProperties(prefix = "app-prefix")
 public class ShopConfig { ...
 ```
+***
+### Events
+
+Events ist ein Mechanismus, um Komponenten lose zu koppeln. 
+Das bedeutet: Eine Komponente kann eine Aktion (Event) auslösen, ohne zu wissen, wer darauf reagiert. 
+Andere Komponenten können sich dafür „anmelden“ und entsprechend reagieren
+
+Spring verwendet das Publisher-Subscriber-Muster:
+- Publisher: Löst ein Event aus.
+- Listener: Hört auf bestimmte Events und reagiert darauf.
+- ApplicationEventPublisher: Spring-interne Komponente, die Events verschickt.
+
+Es gibt auch asynchrone und vordefinierte Events.
