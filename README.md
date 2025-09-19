@@ -10,13 +10,13 @@ Man kann eigene Oberklassen schreiben, jedoch muss man dann prüfen ob alle Abnh
 
 ### Dependency Erklärungen
 
-| Name                         | Wirkung                                                                                        |
-|------------------------------|------------------------------------------------------------------------------------------------|
-| spring-boot-starter          | Core-Starter und bringt alles mit, was man für Spring-Boot-Anwendungen braucht                 |
-| spring-boot-starter-jdbc     | Databasezugriffe über JDBC und DataSources (d.h. SQL selbst schreiben ohne Entities etc.)      |
-| spring-boot-starter-data-jpa | Jakarta Persistenz (Hibernate + automatisches Entity mapping). Wenn CRUD Funktionen ausreichen |
-| spring-boot-starter-json     | JSON Mapping                                                                                   |
-| spring-boot-starter-web      | Für Webservices und dynamische Webseiten inklusive des Servlet-Containers Tomcat               |
+| Name                         | Wirkung                                                                                                                         |
+|------------------------------|---------------------------------------------------------------------------------------------------------------------------------|
+| spring-boot-starter          | Core-Starter und bringt alles mit, was man für Spring-Boot-Anwendungen braucht                                                  |
+| spring-boot-starter-jdbc     | Databasezugriffe über JDBC und DataSources (d.h. SQL selbst schreiben ohne Entities etc.)                                       |
+| spring-boot-starter-data-jpa | Jakarta Persistenz (Hibernate + automatisches Entity mapping (ORM: objektrelationaler mapper)). Wenn CRUD Funktionen ausreichen |
+| spring-boot-starter-json     | JSON Mapping                                                                                                                    |
+| spring-boot-starter-web      | Für Webservices und dynamische Webseiten inklusive des Servlet-Containers Tomcat                                                |
 
 Ausführliche Liste:
 [Dependencies](https://docs.spring.io/spring-boot/reference/using/build-systems.html#using.build-systems.starters)
@@ -257,3 +257,5 @@ Wichtig, dass man einige Properties angibt, z.B.
 - spring.jpa.properties.hibernate.highlight_sql=true
 
 <b>Entity-Beans</b>
+sind Java Abbildungen einer Datenbank Tabelle.
+In der Praxis beginnt man mit der Modellierung der Datenbank und erstellt dann die Entitites.
