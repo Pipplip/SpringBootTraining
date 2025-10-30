@@ -70,6 +70,7 @@ public class Profile {
     )
     private Set<Profile> profilesThatLikeMe = new HashSet<>();
 
+    // Jede entitiy Klasse braucht einen default-konstruktor
     protected Profile() {
     }
 

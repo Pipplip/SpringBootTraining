@@ -16,7 +16,7 @@ Man kann eigene Oberklassen schreiben, jedoch muss man dann prüfen ob alle Abnh
 | spring-boot-starter-jdbc     | Databasezugriffe über JDBC und DataSources (d.h. SQL selbst schreiben ohne Entities etc.)                                       |
 | spring-boot-starter-data-jpa | Jakarta Persistenz (Hibernate + automatisches Entity mapping (ORM: objektrelationaler mapper)). Wenn CRUD Funktionen ausreichen |
 | spring-boot-starter-json     | JSON Mapping                                                                                                                    |
-| spring-boot-starter-web      | Für Webservices und dynamische Webseiten inklusive des Servlet-Containers Tomcat                                                |
+| spring-boot-starter-web      | Für Webservices und dynamische Webseiten inklusive des Servlet-Containers Tomcat und Jackson Json                               |
 
 Ausführliche Liste:
 [Dependencies](https://docs.spring.io/spring-boot/reference/using/build-systems.html#using.build-systems.starters)
@@ -259,3 +259,360 @@ Wichtig, dass man einige Properties angibt, z.B.
 <b>Entity-Beans</b>
 sind Java Abbildungen einer Datenbank Tabelle.
 In der Praxis beginnt man mit der Modellierung der Datenbank und erstellt dann die Entitites.
+In intellij gibt es ein Plugin, das aus einer Datenbanktabelle automatisch eine Entity generiert. (JPA Buddy)
+
+<b>Allgemein</b>
+ - JDBC: Java Database Connectivity, grundlegende Schnittstelle für den Zugriff auf relationale Datenbanken. Definiert Schnittstellen wie Connection, Statement, ResultSet.
+Man kann mit JDBC direkt mit der DB kommunizieren und SQL-Abfragen schreiben und ausführen. Unterste Ebene der Datenbankzugriffe in Java.
+Bsp:
+```java
+Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/test", "user", "pass");
+Statement stmt = conn.createStatement();
+ResultSet rs = stmt.executeQuery("SELECT * FROM user");
+while (rs.next()) {
+    System.out.println(rs.getString("username"));
+}
+```
+- ORM: Object-Relational Mapping, Technik zur Abbildung von Objekten auf relationale Datenbanken.
+- Jakarta Persistence API (JPA): Höhere Abstraktionsebene über JDBC und Standard-API für ORM. Definiert Konzepte wie Entity, EntityManager, Query.
+Ermöglicht objektorientierten Zugriff auf Daten und automatisches Mapping zwischen Java-Objekten und Datenbanktabellen.
+- Konkrete Implementierung von JPA: Hibernate, EclipseLink, OpenJPA. Hibernate ist die am weitesten verbreitete Implementierung.
+- Spring Data JPA: Erweiterung von Spring Data, die JPA-Repositorys und CRUD-Operationen vereinfacht. Baut auf JPA auf und integriert sich nahtlos in das Spring-Ökosystem.
+- spring-boot-starter-data-jpa: Spring Boot Starter, der alle notwendigen Abhängigkeiten für die Arbeit mit JPA und Spring Data JPA bereitstellt.
+
+Ebenen:
+1) spring-boot-starter-data-jpa: 
+   Stellt alle notwendigen Abhängigkeiten für JPA und Spring Data JPA bereit.
+2) Spring Data JPA:
+   Baut auf JPA auf und vereinfacht deren Nutzung.
+   Automatisiert die Erstellung von Repositorys und CRUD-Operationen.
+   Bsp: <code>UserRepository extends JpaRepository<User, Long></code>
+3) JPA (Jakarta Persistence API)
+   Standard-API für ORM und definiert Konzepte wie Entity, EntityManager, Query.
+4) Hibernate (JPA Implementierung):
+   Konkrete Implementierung von JPA, die das Mapping zwischen Java-Objekten und Datenbanktabellen übernimmt.
+5) JDBC: 
+   Führt SQL-Abfragen aus und verwaltet die Verbindung zur Datenbank.
+6) Datenbank: Speichert Daten persistent.
+
+Bsp:
+- <code>pom.xml spring-boot-starter-data-jpa & z.B. com.h2database</code> in pom.xml
+- <code>application.properties</code> ausfüllen mit DB Konfiguration
+- Entity Klasse: (JPA Ebene)
+```java
+import jakarta.persistence.Entity;
+@Entity
+public class User {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String name;
+    
+    public User() {}
+    // Getter und Setter
+}
+```
+- Repository Schnittstelle: (Spring Data JPA Ebene)
+  Standardoperationen werden automatisch bereitgestellt durch JpaRepository und müssen nicht angegeben werden:
+  - save(User entity) 
+  - findById(Long id)
+  - findAll()
+  - deleteById(Long id)
+  - count()
+```java
+import org.springframework.data.jpa.repository.JpaRepository;
+public interface UserRepository extends JpaRepository<User, Long> {
+    List<User> findByName(String name);
+}
+```
+- Service Klasse: (Spring Ebene)
+```java
+import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
+
+@Service
+public class UserService {
+    private final UserRepository userRepository;
+
+    @Autowired
+    public UserService(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
+
+    public User createUser(String name) {
+        User user = new User();
+        user.setName(name);
+        return userRepository.save(user);
+    }
+    
+    public List<User> getUsersByName(String name) {
+        return userRepository.findByName(name);
+    }
+}
+```
+Spring Data JPA ruft über ein Repository den EntitiyManager von JPA auf.
+JPA ruft die Implementierung (Hibernate) auf.
+Hibernate übersetzt die Operation in SQL <code>INSERT INTO users (name) VALUES ('Anna)</code> und führt sie über JDBC aus.
+
+   
+<b>Repository</b><br>
+   Ein Repository ist eine Schnittstelle, die den Zugriff auf die Datenbank kapselt.
+   Es bietet CRUD-Operationen (Create, Read, Update, Delete) und ermöglicht die Definition benutzerdefinierter Abfragen.
+   
+***
+### Spring Web
+Spring Boot Web-Anwendungen werden häufig mit dem Modul spring-boot-starter-web erstellt.
+Es enthält den eingebetteten Servlet-Container (standardmäßig Tomcat), sodass keine separate Installation erforderlich ist.
+Möchte man dennoch einen anderen Container nutzen (z.B. Jetty oder Undertow), muss man die Abhängigkeit in der pom.xml anpassen.
+Doku: https://docs.spring.io/spring-boot/how-to/webserver.html#howto.webserver.use-another
+
+Server ports anpassen z.B.: <br>
+```properties
+server.port=8081
+``` 
+Ein Server kann auch mehrere Ports haben (z.B. HTTP und HTTPS).<br>
+```properties
+server.port=8080
+server.additional-ports[0]=8443
+server.additional-ports[0].protocol=HTTPS
+```
+Ein Server kann zwei Dinge machen:
+1) Statische Inhalte ausliefern (HTML, CSS, JS, Bilder etc.)
+2) Dynamische Inhalte generieren (Webservices, dynamische Webseiten)
+Wenn ein Server über 8080 angesprochen wird, wird geprüft ob eine statische Ressource existiert. Wenn ja, wird diese ausgeliefert.
+Es wird in den Verzeiczhnissen <code>static</code>, <code>public</code>, <code>resources</code> und <code>META-INF/resources</code> gesucht. 
+<br>Wenn keine statische Ressource gefunden wird, wird der Request an einen Controller weitergeleitet. 
+<br>Der Controller verarbeitet die Anfrage und generiert eine Antwort (z.B. JSON, HTML).
+
+<b>Webjars</b><br>
+lassen sich über die pom einbinden und in den resources verwenden.<br>
+Beispiel Bootstrap:
+META-INF/resources/webjars/bootstrap/5.3.3/
+<code><link rel="stylesheet"
+href="webjars/bootstrap/5.3.3/dist/css/bootstrap.css"></code><br>
+https://www.webjars.org/
+
+#### SSL/TLS
+TLS ist der Nachfolger von SSL und wird verwendet, um die Kommunikation zwischen Client und Server zu verschlüsseln.
+Für die Verschlüsselung wird ein Zertifikat benötigt.
+In Spring Boot kann man ein selbstsigniertes Zertifikat für Entwicklungszwecke erstellen:
+```bashkeytool 
+ keytool -genkeypair -alias myapp -keyalg RSA -keysize 2048 -storetype PKCS12 -keystore keystore.p12 -validity 3650 -storepass yourpassword
+```
+Das Zertifikat wird in der application.properties konfiguriert:
+```properties
+server.port=8443
+server.ssl.key-store=classpath:keystore.p12
+server.ssl.key-store-password=yourpassword
+server.ssl.key-store-type=PKCS12
+server.ssl.key-alias=myapp
+```
+Die keystore.p12 Datei wird im src/main/resources Verzeichnis abgelegt.
+
+#### Servlet Standard
+Um dynamische Inhalte zu generieren, verwendet Spring Boot den Servlet-Standard.
+Ein Servlet ist ein kleines Programm innerhalb eines Servlets-Containers (z.B. Tomcat).
+Der Webserver nimmt HTTP-Anfragen entgegen. Wenn statische Inhalte angefragt werden, liefert er diese direkt zurück.
+Wenn dynamische Inhalte angefragt werden, leitet der Webserver die Anfrage an ein Servlet weiter.
+Ein Servlet verarbeitet die Anfrage und generiert eine Antwort (z.B. HTML, JSON).
+In Spring Boot werden Servlets durch Controller-Klassen implementiert.
+
+Der Lebenszyklus eines Servlets:
+1. Initialisierung: Das Servlet wird erstellt und initialisiert (init-Methode).
+2. Anfrageverarbeitung: Für jede eingehende Anfrage wird die service-Methode aufgerufen.
+3. Zerstörung: Wenn das Servlet nicht mehr benötigt wird, wird die destroy-Methode aufgerufen.
+
+Ein Servlet kann mehrfach verwendet werden und wird nicht mehrfach instanziert. Es können mehrere Anfragen gleichzeitig verarbeitet werden (Multithreading).
+Die service Methode startet dabei für jede Anfrage einen neuen Thread.
+
+Servlets haben eine Anzahl an Schwächen, deswegen wird in Spring Boot meist mit <b>Spring Web MVC</b> gearbeitet.<br>
+Mit Spring Web MVC wird ein DispatcherServlet bereitgestellt, der die Anfragen an Controller weiterleitet.<br>
+Der DispatcherServlet ist das Herzstück von Spring Web MVC und fungiert als Front-Controller und vermittelt zwischen Client-Anfragen und den entsprechenden Controllern.
+
+![springwebmvc](springwebmvc.png)
+
+Wenn ein DispatcherServlet eine Anfrage erhält, muss es entscheiden, welcher Controller die Anfrage bearbeiten soll.<br>
+Dazu verwendet es Handler Mappings, die die URL der Anfrage mit den verfügbaren Controllern abgleichen.<br>
+
+Bsp. Handler Mappings:
+```java
+@RestController
+@RequestMapping("/api/users")
+public class UserController {
+    private final UserService userService;
+
+    public UserController(UserService userService) {
+        this.userService = userService;
+    }
+    
+    @GetMapping("/{id}") // http://localhost:8080/api/users/1
+    public User getUserById(@PathVariable Long id) {
+        userService.getUserById(id);
+    }
+
+    @GetMapping( "/total" ) // dasselbe wie @RequestMapping(method = RequestMethod.GET, path = "/total")
+    public String totalNumberOfRegisteredUnicorns() { // http://localhost:8080/api/users/total
+        return String.valueOf( userService.getTotalNumberOfRegisteredUsers() );
+    }
+}
+```
+Der Service sieht dann so aus:
+```java
+@Service
+public class UserService {
+
+    private final ProfileRepository profiles;
+
+    public UserService(ProfileRepository profiles) {
+        this.profiles = profiles;
+    }
+
+    // Business-Logik: Benutzer nach ID abrufen
+    public User getUserById(Long id) {
+        return profiles.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+    }
+
+    // Business-Logik: Gesamtzahl der registrierten Einhörner
+    public long getTotalNumberOfRegisteredUsers() {
+        return profiles.count();
+    }
+}
+```
+
+Controller greifen nur auf Services zu, die die Businesslogik enthalten. Services greifen auf Repositories zu, die die Datenbankzugriffe enthalten.
+Ein Controller implementiert keine Businesslogik und keine Datenbankzugriffe direkt.
+Controller sind singletons und werden nur einmal instanziert. Deswegen sollten auch keine zustandsbehafteten Felder in einem Controller verwendet werden.
+Also z.B. keine Listen oder Zähler, die den Zustand über mehrere Anfragen hinweg speichern.
+Ein anderer Client würde sonst den Zustand beeinflussen.
+
+Controller -> Services -> Repositories -> Datenbank
+
+#### HTTP Message Converter
+Der HTTP Message Converter ist eine Komponente in Spring Web MVC, die dafür verantwortlich ist, HTTP-Anfragen und -Antworten in Java-Objekte zu konvertieren und umgekehrt.
+Wenn eine Anfrage an einen Controller gesendet wird, verwendet der DispatcherServlet den HTTP Message Converter, um die Anfrage in das entsprechende Java-Objekt zu konvertieren.
+Wenn der Controller eine Antwort zurückgibt, verwendet der HTTP Message Converter den Inhalt der Antwort, um die HTTP-Antwort zu erstellen. 
+Bspiel: Wenn ein Controller eine Methode hat, die ein Java-Objekt zurückgibt, wird der HTTP Message Converter verwendet, um das Objekt in JSON zu konvertieren und in der HTTP-Antwort zurückzugeben.
+Beispiel:
+```java
+@GetMapping("/user/{id}")
+public User getUserById(@PathVariable Long id) {
+    return userService.getUserById(id);
+}
+```
+Der HTTP Message Converter konvertiert das User-Objekt in JSON und sendet es als HTTP-Antwort zurück.
+Alles automatisch im Hintergrund.
+Welche Converter gibt es?
+- MappingJackson2HttpMessageConverter: Konvertiert Java-Objekte in JSON und umgekehrt (Standard in Spring Boot)
+- MappingJackson2XmlHttpMessageConverter: Konvertiert Java-Objekte in XML und umgekehrt
+- StringHttpMessageConverter: Konvertiert Strings
+- FormHttpMessageConverter: Konvertiert Formulardaten
+- ByteArrayHttpMessageConverter: Konvertiert Byte-Arrays
+
+Bsp: StingHttpMessageConverter
+```java
+@GetMapping("/hello")
+public String sayHello() {
+    return "Hello, World!";
+}
+```
+Der StringHttpMessageConverter konvertiert den String "Hello, World!" in die HTTP-Antwort. 
+
+Bsp: XML Converter
+```java
+@GetMapping(value = "/user/{id}", produces = MediaType.APPLICATION_XML_VALUE)
+public User getUserById(@PathVariable Long id) {
+    return userService.getUserById(id);
+}
+```
+Der MappingJackson2XmlHttpMessageConverter konvertiert das User-Objekt in XML und sendet es als HTTP-Antwort zurück.
+
+#### Response Status
+Standardmäßig gibt ein Controller eine HTTP 200 OK Antwort zurück, wenn alles erfolgreich war.
+@ResponseStatus kann verwendet werden, um den HTTP-Statuscode anzupassen.
+```java
+@GetMapping("/user/{id}")
+@ResponseStatus(HttpStatus.OK) // Standard, kann weggelassen werden
+public User getUserById(@PathVariable Long id) {
+    return userService.getUserById(id);
+}
+```
+```java
+@PostMapping("/user")
+@ResponseStatus(HttpStatus.CREATED) // 201 Created
+public User createUser(@RequestBody User user) {
+    return userService.createUser(user);
+}
+```
+```java
+@DeleteMapping("/user/{id}")
+@ResponseStatus(HttpStatus.NO_CONTENT) // 204 No Content
+public void deleteUser(@PathVariable Long id) {
+    userService.delete(user);
+    // Der Service sollte Fehler abfangen und eine Exception werfen, wenn der User nicht existiert
+    // Bsp:     findById(id).orElseThrow(() -> new UserNotFoundException(id));
+}
+```
+
+Der Controller soll keine Exceptions fangen und behandeln. Sondern Exceptions sollen bis zum Controller durchgereicht werden.
+#### Exception Handling
+Es gibt mehrere Möglichkeiten, Exceptions in Spring Boot Web-Anwendungen zu behandeln:
+1. @ExceptionHandler in Controller-Klassen: Definiert Methoden, die bestimmte Exceptions behandeln.
+```java
+@RestController
+public class UserController {
+    // andere Methoden
+    @ExceptionHandler(UserNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorResponse handleUserNotFound(UserNotFoundException ex) {
+        return new ErrorResponse("User not found", ex.getMessage());
+    }
+}
+```
+2. @ControllerAdvice: Globale Exception-Handler, die für alle Controller gelten.
+```java
+@ControllerAdvice
+public class GlobalExceptionHandler {
+    @ExceptionHandler(Exception.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ErrorResponse handleAllExceptions(Exception ex) {
+        return new ErrorResponse("Internal server error", ex.getMessage());
+    }
+}
+```
+3. ResponseStatusException: Direkt in Controller-Methoden verwendet, um spezifische HTTP-Antworten zu erzeugen.
+```java
+@GetMapping("/user/{id}")
+public User getUserById(@PathVariable Long id) {
+    return userService.getUserById(id)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+}
+```
+
+### Spring MVC Handler-Methodenparameter – Spickzettel
+
+| Kategorie             | Annotation / Typ                          | Zweck                                        | Beispiel |
+|----------------------|-------------------------------------------|---------------------------------------------|----------|
+| **URL Path**          | `@PathVariable`                           | Wert aus URL-Pfad extrahieren               | `@GetMapping("/users/{id}") public User getUser(@PathVariable Long id)` |
+| **Query Parameter**   | `@RequestParam`                            | Wert aus URL-Query-String                   | `@GetMapping("/search") public List<User> search(@RequestParam String name)` |
+| **Optional Query**    | `@RequestParam(required=false, defaultValue="0")` | Optionaler Parameter mit Default           | `public List<User> search(@RequestParam(defaultValue="0") int page)` |
+| **Request Body**      | `@RequestBody`                             | JSON/XML/etc. in Java-Objekt                | `@PostMapping("/users") public User createUser(@RequestBody User user)` |
+| **Form / Multipart**  | `@ModelAttribute`                          | Formulardaten binden                         | `@PostMapping("/register") public String register(@ModelAttribute UserForm form)` |
+| **Request Header**    | `@RequestHeader`                           | HTTP Header auslesen                         | `@GetMapping("/check") public String check(@RequestHeader("X-Auth-Token") String token)` |
+| **Cookie**            | `@CookieValue`                             | Cookie-Wert auslesen                         | `@GetMapping("/welcome") public String welcome(@CookieValue("sessionId") String sessionId)` |
+| **Matrix Parameter**  | `@MatrixVariable`                          | Pfadsegment-Parameter `/cars;color=red`     | `@GetMapping("/cars/{id}") public Car getCar(@MatrixVariable String color)` |
+| **Servlet API**       | `HttpServletRequest`, `HttpServletResponse`, `HttpSession` | Direkter Zugriff auf HTTP-Details | `public String handle(HttpServletRequest req)` |
+| **Validation / Binding** | `@Valid` + `BindingResult`              | Validierung von Request Body oder Form       | `public ResponseEntity<User> createUser(@Valid @RequestBody User user, BindingResult result)` |
+| **Security / Auth**   | `Principal`                                | Aktueller Benutzer                           | `public String profile(Principal principal)` |
+| **Paging / Sorting**  | `Pageable`, `Sort`                          | Pagination/Sortierung                        | `public Page<User> listUsers(Pageable pageable)` |
+| **Locale**            | `Locale`                                   | Aktuelle Sprache / Region                    | `public String greeting(Locale locale)` |
+
+---
+
+#### Tipps
+
+1. `@RestController` → alle Methoden automatisch `@ResponseBody`.
+2. Kombinierbar: z. B. `@RequestParam` + `@PageableDefault`.
+3. `HttpMessageConverter` kümmert sich um `@RequestBody` → JSON automatisch in Java-Objekt.
+4. Für sauberes Fehlerhandling: Exceptions im Service werfen → `@ControllerAdvice` behandeln.
