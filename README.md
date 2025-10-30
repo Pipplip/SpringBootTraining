@@ -256,12 +256,12 @@ Wichtig, dass man einige Properties angibt, z.B.
 - spring.jpa.properties.hibernate.format_sql=true
 - spring.jpa.properties.hibernate.highlight_sql=true
 
-<b>Entity-Beans</b>
+**Entity-Beans**
 sind Java Abbildungen einer Datenbank Tabelle.
 In der Praxis beginnt man mit der Modellierung der Datenbank und erstellt dann die Entitites.
 In intellij gibt es ein Plugin, das aus einer Datenbanktabelle automatisch eine Entity generiert. (JPA Buddy)
 
-<b>Allgemein</b>
+**Allgemein**
  - JDBC: Java Database Connectivity, grundlegende Schnittstelle für den Zugriff auf relationale Datenbanken. Definiert Schnittstellen wie Connection, Statement, ResultSet.
 Man kann mit JDBC direkt mit der DB kommunizieren und SQL-Abfragen schreiben und ausführen. Unterste Ebene der Datenbankzugriffe in Java.
 Bsp:
@@ -356,7 +356,7 @@ JPA ruft die Implementierung (Hibernate) auf.
 Hibernate übersetzt die Operation in SQL <code>INSERT INTO users (name) VALUES ('Anna)</code> und führt sie über JDBC aus.
 
    
-<b>Repository</b><br>
+**Repository**<br>
    Ein Repository ist eine Schnittstelle, die den Zugriff auf die Datenbank kapselt.
    Es bietet CRUD-Operationen (Create, Read, Update, Delete) und ermöglicht die Definition benutzerdefinierter Abfragen.
    
@@ -385,7 +385,7 @@ Es wird in den Verzeiczhnissen <code>static</code>, <code>public</code>, <code>r
 <br>Wenn keine statische Ressource gefunden wird, wird der Request an einen Controller weitergeleitet. 
 <br>Der Controller verarbeitet die Anfrage und generiert eine Antwort (z.B. JSON, HTML).
 
-<b>Webjars</b><br>
+**Webjars**<br>
 lassen sich über die pom einbinden und in den resources verwenden.<br>
 Beispiel Bootstrap:
 META-INF/resources/webjars/bootstrap/5.3.3/
@@ -426,7 +426,7 @@ Der Lebenszyklus eines Servlets:
 Ein Servlet kann mehrfach verwendet werden und wird nicht mehrfach instanziert. Es können mehrere Anfragen gleichzeitig verarbeitet werden (Multithreading).
 Die service Methode startet dabei für jede Anfrage einen neuen Thread.
 
-Servlets haben eine Anzahl an Schwächen, deswegen wird in Spring Boot meist mit <b>Spring Web MVC</b> gearbeitet.<br>
+Servlets haben eine Anzahl an Schwächen, deswegen wird in Spring Boot meist mit **Spring Web MVC** gearbeitet.<br>
 Mit Spring Web MVC wird ein DispatcherServlet bereitgestellt, der die Anfragen an Controller weiterleitet.<br>
 Der DispatcherServlet ist das Herzstück von Spring Web MVC und fungiert als Front-Controller und vermittelt zwischen Client-Anfragen und den entsprechenden Controllern.
 
