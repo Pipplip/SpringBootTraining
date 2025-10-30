@@ -613,6 +613,6 @@ public User getUserById(@PathVariable Long id) {
 #### Tipps
 
 1. `@RestController` → alle Methoden automatisch `@ResponseBody`.
-2. Kombinierbar: z. B. `@RequestParam` + `@PageableDefault`.
+2. Kombinierbar: z.B. `@RequestParam` + `@PageableDefault`.
 3. `HttpMessageConverter` kümmert sich um `@RequestBody` → JSON automatisch in Java-Objekt.
 4. Für sauberes Fehlerhandling: Exceptions im Service werfen → `@ControllerAdvice` behandeln.
