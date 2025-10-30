@@ -556,39 +556,6 @@ public void deleteUser(@PathVariable Long id) {
 ```
 
 Der Controller soll keine Exceptions fangen und behandeln. Sondern Exceptions sollen bis zum Controller durchgereicht werden.
-#### Exception Handling
-Es gibt mehrere Möglichkeiten, Exceptions in Spring Boot Web-Anwendungen zu behandeln:
-1. @ExceptionHandler in Controller-Klassen: Definiert Methoden, die bestimmte Exceptions behandeln.
-```java
-@RestController
-public class UserController {
-    // andere Methoden
-    @ExceptionHandler(UserNotFoundException.class)
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ErrorResponse handleUserNotFound(UserNotFoundException ex) {
-        return new ErrorResponse("User not found", ex.getMessage());
-    }
-}
-```
-2. @ControllerAdvice: Globale Exception-Handler, die für alle Controller gelten.
-```java
-@ControllerAdvice
-public class GlobalExceptionHandler {
-    @ExceptionHandler(Exception.class)
-    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public ErrorResponse handleAllExceptions(Exception ex) {
-        return new ErrorResponse("Internal server error", ex.getMessage());
-    }
-}
-```
-3. ResponseStatusException: Direkt in Controller-Methoden verwendet, um spezifische HTTP-Antworten zu erzeugen.
-```java
-@GetMapping("/user/{id}")
-public User getUserById(@PathVariable Long id) {
-    return userService.getUserById(id)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
-}
-```
 
 ### Spring MVC Handler-Methodenparameter – Spickzettel
 
@@ -616,3 +583,102 @@ public User getUserById(@PathVariable Long id) {
 2. Kombinierbar: z.B. `@RequestParam` + `@PageableDefault`.
 3. `HttpMessageConverter` kümmert sich um `@RequestBody` → JSON automatisch in Java-Objekt.
 4. Für sauberes Fehlerhandling: Exceptions im Service werfen → `@ControllerAdvice` behandeln.
+
+**Data Transfer Objects (DTOs)**<br>
+DTOs sind einfache Java-Klassen, die nur Daten enthalten (keine Geschäftslogik).
+Sie werden verwendet, um Daten zwischen verschiedenen Schichten einer Anwendung zu übertragen, z.B. zwischen dem Controller und dem Service.
+DTOs helfen dabei, die Datenstruktur zu definieren, die über die API gesendet und empfangen wird.
+Sie können auch verwendet werden, um nur die benötigten Daten zu übertragen und sensible Informationen auszublenden.
+Beispiel DTO:
+```java
+public class UserDTO {
+    private Long id;
+    private String name;
+    private String email;
+    // Getter und Setter
+}
+```
+DTO im Controller:
+```java
+@GetMapping("/user/{id}")
+public UserDTO getUserById(@PathVariable Long id) {
+    return userService.getUserById(id);
+}
+```
+DTO im Service:
+```java
+public UserDTO getUserById(Long id) {
+    User user = userRepository.findById(id).orElseThrow(() -> new UserNotFoundException(id));
+    UserDTO dto = new UserDTO();
+    dto.setId(user.getId());
+    dto.setName(user.getName());
+    dto.setEmail(user.getEmail());
+    return dto;
+}
+```
+Man auch Mapper-Bibliotheken wie MapStruct oder ModelMapper verwenden, um die Konvertierung zwischen Entitäten und DTOs zu automatisieren.
+Vorteil der mapper: Weniger Boilerplate-Code, einfachere Wartbarkeit.
+
+**`Optional<T>`**<br>
+Optional ist ein Container-Objekt, das entweder einen Wert enthält oder leer ist.
+Es wird verwendet, um NullPointerExceptions zu vermeiden und den Umgang mit optionalen Werten zu erleichtern.
+<br>Beispiel:
+```java
+public interface UserRepository extends JpaRepository<User, Long> {
+    Optional<User> findById(Long id);
+}
+```
+Tipps:
+- Nicht als Feld oder Parameter verwenden – nur für Rückgaben.
+- Nie Optional.get() ohne isPresent() – kann NPE werfen.
+- Gut kombinierbar mit Streams – z. B. map, flatMap, filter.
+- In DTOs / JSON vermeiden – nur intern zwischen Schichten benutzen.
+
+#### Exception Handling
+
+Controller sollen in Spring Boot keine Fehlerbehandlung direkt übernehmen.
+Sie sollen nur Anfragen entgegennehmen und Antworten liefern, nicht Business- oder Fehlerlogik steuern.
+
+Bsp:
+<br>Controller
+```java
+@GetMapping("/user/{id}")
+public User getUserById(@PathVariable Long id) {
+    return userService.getUserById(id); // Clean, keine Fehlerbehandlung
+}
+```
+<br>Service
+```java
+public User getUserById(Long id) {
+    return userRepository.findById(id)
+        .orElseThrow(() -> new UserNotFoundException("User not found with id: " + id));
+}
+```
+<br>Custom Exception - im exception Paket
+```java
+public class UserNotFoundException extends RuntimeException {
+    public UserNotFoundException(Long id) {
+        super("User mit ID " + id + " wurde nicht gefunden");
+    }
+}
+```
+<br>Global Exception Handler - im exception Paket
+```java
+@ControllerAdvice
+public class GlobalExceptionHandler {
+    @ExceptionHandler(UserNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ResponseEntity<String> handleUserNotFound(UserNotFoundException ex) {
+        return new ErrorResponse(404, ex.getMessage(), LocalDateTime.now());
+    }
+}
+```
+Error response DTO - im DTO Paket
+```java
+public class ErrorResponse {
+    private int status;
+    private String message;
+    private LocalDateTime timestamp;
+    // Konstruktor, Getter, Setter
+}
+```
