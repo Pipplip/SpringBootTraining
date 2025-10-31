@@ -682,3 +682,218 @@ public class ErrorResponse {
     // Konstruktor, Getter, Setter
 }
 ```
+***
+### Webservices und Restful APIs
+Webservices sind Dienste, die über das Web kommunizieren und Daten austauschen.
+REST ist im Grunde nicht anderes als CRUD Operationen auf Datenbanken über HTTP.
+Die Kommunikation muss immer zustandslos sein (stateless). D.h. der Server speichert keinen Zustand zwischen den Anfragen.
+Jede Anfrage vom Client muss alle Informationen enthalten, die der Server benötigt, um die Anfrage zu verarbeiten.
+
+## GraphQL
+Problem bei REST: Möchte man verschiedene Daten von verschiedenen Endpunkten abrufen, muss man mehrere Anfragen machen.
+Diese Anfragen können zu Overfetching (zu viele Daten) oder Underfetching (zu wenige Daten) führen.
+Beispiel, Email und lastSeen Status eines Users abrufen. Die Infos sind aber in unterschiedlichen Endpunkten:
+- GET /api/users/1 liefert z.B. John, test@test.de, 1 (user ID)
+- GET /api/userstatus/1 liefert z.B. online, 2024-06-01T12:00:00 (last seen)
+
+GraphQL löst dieses Problem, indem es dem Client ermöglicht, genau die Daten anzufordern, die er benötigt, in einer einzigen Anfrage.
+GraphQL verwendet ein einziges Endpunkt (z.B. /graphql) für alle Anfragen.
+Clients senden Abfragen, die die Struktur der gewünschten Daten definieren.
+Der Server verarbeitet die Abfrage und gibt nur die angeforderten Daten zurück.
+
+Bsp:
+```graphql
+query {
+  user(id: 1) {
+    email
+    status {
+        lastSeen
+    }
+  }
+}
+```
+Antwort:
+```json
+{
+  "data": {
+    "user": {
+      "email": "test@test.de",
+      "status": {
+        "lastSeen": "2024-06-01T12:00:00"
+      }
+    }
+  }
+}
+```
+GraphQL bietet auch Vorteile wie:
+- Starke Typisierung: Das Schema definiert die Struktur der Daten und die verfügbaren Operationen.
+- Echtzeit-Updates: Mit Subscriptions können Clients Echtzeit-Daten erhalten.
+- Selbstbeschreibend: Das Schema dient als Dokumentation für die API.
+
+Einbindung in Spring Boot:
+1. Abhängigkeiten in pom.xml hinzufügen:
+   `<groupId>org.springframework.boot</groupId>
+   <artifactId>spring-boot-starter-graphql</artifactId>`
+2. GraphQL Schema definieren (z.B. src/main/resources/graphql/schema.graphqls im resources Verzeichnis):
+```graphql
+type Query {
+  user(id: ID!): User
+}
+type User {
+  id: ID!
+  email: String!
+  status: UserStatus
+}
+type UserStatus {
+  lastSeen: String!
+}
+```
+3. Resolver implementieren:
+```java
+@Component
+public class UserResolver implements GraphQLQueryResolver {
+    private final UserService userService;
+    public UserResolver(UserService userService) {
+        this.userService = userService;
+    }
+    public User getUser(Long id) {
+        return userService.getUserById(id);
+    }
+}
+```
+4. GraphQL Endpunkt konfigurieren (standardmäßig /graphql):
+```properties
+spring.graphql.path=/graphql
+```
+***
+### Asynchrone / zeitintensive Requests
+Webserver nehmen Anfragen in Threads entgegen. (Worker Threads)
+Wenn eine Anfrage lange dauert (z.B. Datenbankzugriff, PDF Generierung etc.), können bei viele weiteren Anfragen alle Threads belegt sein.
+Die Anfragen müssen warten, bis ein Thread wieder frei wird. Das führt zu Timeouts und schlechter Performance.
+Asynchrone Requests lösen dieses Problem, indem sie die Verarbeitung einer Anfrage in einen separaten Thread auslagern.
+Der ursprüngliche Thread wird sofort freigegeben, um weitere Anfragen zu bearbeiten.
+Wenn die Verarbeitung abgeschlossen ist, wird das Ergebnis zurückgegeben.
+Spring MVC liefert dabei:
+- `DeferredResult<V>`: Ein Platzhalter für ein Ergebnis, das später bereitgestellt wird.
+- `WebAsyncTask<V>`: Erweiterte Steuerung über Timeout und Fehlerbehandlung.
+- `Callable<V>`: Eine Methode, die einen Wert zurückgibt.
+Beispiel:
+```java
+@GetMapping("/async-callable")
+public Callable<String> asyncCallable() {
+    return () -> {
+        // Lange laufende Aufgabe
+        Thread.sleep(5000);
+        return "Fertig!";
+    };
+}
+```
+Wenn der Return Typ `Callable` ist, wird die Methode in einem separaten Thread ausgeführt.
+
+***
+### Bean validation
+Bean Validation ist ein Standard zur Validierung von Java-Objekten.
+In Spring Boot wird Bean Validation häufig in Kombination mit JPA-Entitäten und DTOs verwendet.
+Die Validierung erfolgt durch Annotationen, die auf Felder oder Methoden angewendet werden.
+Beispiel:
+```java
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+public class UserDTO {
+    @NotNull(message = "Name darf nicht null sein")
+    @Size(min = 2, max = 50, message = "Name muss zwischen 2 und 50 Zeichen lang sein")
+    private String name;
+
+    @NotNull(message = "Email darf nicht null sein")
+    @Email(message = "Email muss ein gültiges Format haben")
+    private String email;
+    // Getter und Setter
+}
+```
+Um die Validierung in einem Controller zu aktivieren, wird die `@Valid` Annotation verwendet:
+```java
+@PostMapping("/users")
+public ResponseEntity<UserDTO> createUser(@Valid @RequestBody UserDTO userDTO, BindingResult result) {
+    if (result.hasErrors()) {
+        // Fehlerbehandlung
+    }
+    // Benutzer erstellen
+}
+```
+Wenn die Validierung fehlschlägt, werden die Fehler im `BindingResult` Objekt gespeichert.
+Einbinden in der pom.xml:
+```xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-validation</artifactId>
+</dependency>
+```
+***
+### Resource ID / UUID
+In RESTful APIs ist es üblich, Ressourcen über eindeutige Identifikatoren (IDs) zu adressieren.
+Diese IDs können numerisch (z.B. 1, 2, 3) oder UUIDs (Universally Unique Identifiers) sein.
+UUIDs sind 128-Bit-Werte, die weltweit eindeutig sind.
+Sie werden häufig verwendet, um Kollisionen zu vermeiden, insbesondere in verteilten Systemen und werden nicht durch erraten vorhersehbar.
+In Spring Boot können UUIDs als Pfadvariablen verwendet werden:
+```java
+@GetMapping("/users/{id}")
+public User getUserById(@PathVariable UUID id) {
+    return userService.getUserById(id);
+}
+```
+In der Entity-Klasse kann das ID-Feld als UUID definiert werden:
+```java
+import jakarta.persistence.Id;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import java.util.UUID;
+@Entity
+public class User {
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private UUID id;
+    private String name;
+    // Getter und Setter
+}
+```
+Beim Erstellen einer neuen Ressource wird die UUID automatisch generiert.
+```java
+@PostMapping("/users")
+public User createUser(@RequestBody User user) {
+    return userRepository.save(user);
+}
+```
+***
+### Versionierung von APIs
+Versionierung ist wichtig, um Änderungen an einer API vorzunehmen, ohne bestehende Clients zu brechen.
+Es gibt verschiedene Strategien zur Versionierung von APIs:
+1. URL-Versionierung: Die Version wird in der URL angegeben.
+   Beispiel: `/api/v1/users`, `/api/v2/users`
+2. Header-Versionierung: Die Version wird im HTTP-Header angegeben.
+   Beispiel: `Accept: application/vnd.myapp.v1+json`
+3. Query-Parameter-Versionierung: Die Version wird als Query-Parameter angegeben.
+   Beispiel: `/api/users?version=1`
+In Spring Boot kann die URL-Versionierung einfach durch unterschiedliche Controller-Klassen oder unterschiedliche `@RequestMapping` Pfade umgesetzt werden:
+```java
+@RestController
+@RequestMapping("/api/v1/users")
+public class UserControllerV1 {
+    // Endpunkte für Version 1
+}
+@RestController
+@RequestMapping("/api/v2/users")
+public class UserControllerV2 {
+    // Endpunkte für Version 2
+}
+```
+***
+### Spring Security
+Spring Security ist ein leistungsstarkes und hochgradig anpassbares Framework zur Sicherung von Web-Anwendungen.
+Es bietet Authentifizierungs- und Autorisierungsfunktionen, um den Zugriff auf Ressourcen zu kontrollieren.
+In Spring Boot kann Spring Security einfach durch Hinzufügen der Abhängigkeit in der pom.xml aktiviert werden:
+```xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-security</artifactId>
+</dependency>
+```
