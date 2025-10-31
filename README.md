@@ -897,3 +897,11 @@ In Spring Boot kann Spring Security einfach durch Hinzufügen der Abhängigkeit 
     <artifactId>spring-boot-starter-security</artifactId>
 </dependency>
 ```
+Für Authentifizierung gibt es zwei Hauptansätze:
+Authorization-Header mit späterem Cookie-Austausch oder Token-basierte Authentifizierungen (JWT).
+Spring Security konfiguriert standardmäßig eine einfache HTTP-Basic-Authentifizierung.
+Tokens lassen sich in einem Microservice-Architektur gut verwenden, da sie zustandslos sind.
+Cookies dagegen sind zustandsbehaftet und müssen serverseitig verwaltet werden.
+
+***
+### Logging
